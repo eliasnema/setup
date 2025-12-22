@@ -1,0 +1,10 @@
+# theme = Catppuccin Frappe
+theme = Seoulbones Dark
+
+command = /opt/homebrew/bin/fish
+
+# background-opacity = 0.95
+
+macos-option-as-alt = true
+
+keybind = global:ctrl+grave_accent=toggle_quick_terminal

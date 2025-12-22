@@ -11,26 +11,28 @@
 # tap "repository/tapname" # Example: tap "homebrew/cask-fonts"
 
 # Command-line tools (Formulae)
-brew "git"          # Version control system (often included with Xcode tools)
+brew "git"
 brew "gh"
-brew "htop"         # Interactive process viewer
-brew "wget"         # File downloader
+brew "htop"
+brew "wget"
 brew "nushell"
-brew "node"         # JavaScript runtime (if you do web development)
-# brew "python"     # Python programming language (macOS has a system version)
-brew "tailscale"
+brew "node"
+# brew "python"
+# brew "tailscale"
 brew "cmake"
+brew "gemini-cli"
 
 # GUI Applications (Casks)
 
 # -- Browsers --
 cask "google-chrome"
+cask "sensiblesidebuttons"
 
 # -- Communication --
 cask "slack"
 cask "zoom"
 cask "discord"
-cask "whatsapp"
+# cask "whatsapp"
 cask "telegram"
 cask "signal"
 
@@ -45,9 +47,15 @@ cask "anki"
 
 # -- Development --
 cask "visual-studio-code" # Code editor
-cask "cursor"
+# cask "cursor"
 cask "quarto"
 # cask "docker"            # Containerization platform (Docker Desktop)
+brew "uv"
+brew "mysql"
+cask "tableau-public"
+cask "microsoft-excel"
+cask "github"
+cask "mysqlworkbench"
 
 # -- Utilities --
 cask "vlc"              # Media player
@@ -62,12 +70,13 @@ cask "prusaslicer"
 cask "ghostty"
 # cask "balenaetcher"     # Tool to flash OS images
 # cask "keka"             # Alternative file archiver
+cask "acorn"
 
 # -- Creative --
 # cask "gimp"             # Free image editor
 # cask "inkscape"         # Free vector graphics editor
 # cask "blender"          # 3D creation suite
-cask "freecad"
+# cask "freecad"
 
 # -- Fonts (Example, requires tapping the repository first) --
 # tap "homebrew/cask-fonts"
