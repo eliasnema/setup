@@ -7,26 +7,37 @@
 # to find the correct package name.
 # ----------------------------------------------------
 
-# Tap repositories (optional, needed for some specific apps)
-# tap "repository/tapname" # Example: tap "homebrew/cask-fonts"
-
 # Command-line tools (Formulae)
 brew "git"
 brew "gh"
 brew "htop"
 brew "wget"
 brew "nushell"
+brew "tailscale"
+
+# Dev
 brew "node"
-# brew "python"
-# brew "tailscale"
 brew "cmake"
 brew "gemini-cli"
+brew "neovim"
+brew "opencode"
+brew "tmux"
+brew "uv"
+brew "mysql"
+
+cask "visual-studio-code"
+# cask "cursor"
+cask "quarto"
+cask "docker"
+cask "github"
+cask "dropbox"
 
 # GUI Applications (Casks)
 
 # -- Browsers --
 cask "google-chrome"
-cask "sensiblesidebuttons"
+cask "thebrowsercompany-dia"
+cask "brave-browser"
 
 # -- Communication --
 cask "slack"
@@ -37,25 +48,15 @@ cask "telegram"
 cask "signal"
 
 # -- Productivity --
-cask "rectangle"      # Window management (free alternative to Magnet)
+cask "rectangle"
 cask "alfred"
-# cask "raycast"        # Launcher/Productivity app (alternative: alfred)
-cask "obsidian"       # Note-taking / Knowledge base
-cask "netnewswire"    # RSS
+# cask "raycast"
+cask "obsidian"
+cask "netnewswire"
 cask "anki"
-
-
-# -- Development --
-cask "visual-studio-code" # Code editor
-# cask "cursor"
-cask "quarto"
-# cask "docker"            # Containerization platform (Docker Desktop)
-brew "uv"
-brew "mysql"
-cask "tableau-public"
-cask "microsoft-excel"
-cask "github"
-cask "mysqlworkbench"
+cask "claude"
+cask "llamabarn"
+cask "sensiblesidebuttons"
 
 # -- Utilities --
 cask "vlc"              # Media player
@@ -77,11 +78,18 @@ cask "acorn"
 # cask "inkscape"         # Free vector graphics editor
 # cask "blender"          # 3D creation suite
 # cask "freecad"
+# cask "openscad"
 
 # -- Fonts (Example, requires tapping the repository first) --
 # tap "homebrew/cask-fonts"
 # cask "font-fira-code"
 # cask "font-jetbrains-mono"
+
+# Teaching
+cask "mysqlworkbench"
+cask "tableau-public"
+cask "microsoft-excel"
+
 
 # ----------------------------------------------------
 # End of Brewfile
