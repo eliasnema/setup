@@ -1,0 +1,35 @@
+#!/bin/bash
+
+# Re-apply local dotfiles that Omarchy updates may refresh in ~/.config.
+SETUP_DIR="$HOME/Work/setup/linux-omarchy"
+
+copy_config() {
+  local relative_path=$1
+  local source_path="$SETUP_DIR/$relative_path"
+  local target_path="$HOME/$relative_path"
+
+  [[ -f $source_path ]] || return 0
+
+  mkdir -p "$(dirname "$target_path")"
+  cp "$source_path" "$target_path"
+}
+
+copy_config ".config/hypr/hypridle.conf"
+copy_config ".config/hypr/hyprland.conf"
+copy_config ".config/hypr/bindings.conf"
+copy_config ".config/hypr/monitors.conf"
+copy_config ".config/hypr/workspaces.conf"
+copy_config ".config/hypr/apps.conf"
+copy_config ".config/waybar/config.jsonc"
+copy_config ".config/waybar/style.css"
+copy_config ".config/ghostty/config"
+copy_config ".local/bin/omarchy-hibernate-fix-apply"
+chmod 0755 "$HOME/.local/bin/omarchy-hibernate-fix-apply" 2>/dev/null || true
+
+hyprctl reload >/dev/null 2>&1 || true
+omarchy-restart-waybar >/dev/null 2>&1 || true
+pkill hypridle >/dev/null 2>&1 || true
+setsid uwsm-app -- hypridle >/tmp/hypridle.log 2>&1 &
+
+"$HOME/.local/bin/omarchy-hibernate-fix-apply" >/tmp/omarchy-hibernate-fix.log 2>&1 || \
+  notify-send "Hibernate fix needs attention" "Run ~/.local/bin/omarchy-hibernate-fix-apply and approve the prompt."

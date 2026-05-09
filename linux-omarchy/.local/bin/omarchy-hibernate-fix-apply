@@ -1,0 +1,117 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+if [[ ${EUID:-$(id -u)} -ne 0 ]]; then
+  exec pkexec "$0" "$@"
+fi
+
+install -d \
+  /etc/systemd/logind.conf.d \
+  /etc/systemd/sleep.conf.d \
+  /usr/lib/systemd/system-sleep \
+  /etc/modprobe.d \
+  /etc/mkinitcpio.conf.d \
+  /etc/limine-entry-tool.d
+
+cat >/etc/systemd/logind.conf.d/20-lid-hibernate.conf <<'EOF'
+[Login]
+HandleLidSwitch=hibernate
+HandleLidSwitchExternalPower=hibernate
+HandleLidSwitchDocked=ignore
+EOF
+
+rm -f /etc/systemd/logind.conf.d/20-lid-suspend-then-hibernate.conf
+
+cat >/etc/systemd/sleep.conf.d/20-hibernate-platform.conf <<'EOF'
+[Sleep]
+HibernateMode=platform
+EOF
+
+cat >/usr/lib/systemd/system-sleep/hibernate-hypridle <<'EOF'
+#!/bin/bash
+
+set -u
+
+user_name="lsnm"
+user_id=$(id -u "$user_name" 2>/dev/null) || exit 0
+runtime_dir="/run/user/$user_id"
+
+log() {
+  systemd-cat -t hibernate-hypridle -p info printf '%s\n' "$1" || true
+}
+
+case "$1/$2" in
+  pre/hibernate|pre/suspend-then-hibernate)
+    log "pre $2: stopping hypridle"
+    [[ -d $runtime_dir ]] && runuser -u "$user_name" -- env XDG_RUNTIME_DIR="$runtime_dir" systemctl --user stop hypridle.service >/dev/null 2>&1 || true
+    pkill -u "$user_id" -x hypridle >/dev/null 2>&1 || true
+    sleep 1
+    if pgrep -u "$user_id" -x hypridle >/dev/null 2>&1; then
+      log "pre $2: hypridle still running"
+    else
+      log "pre $2: hypridle stopped"
+    fi
+    ;;
+  post/hibernate|post/suspend-then-hibernate)
+    log "post $2: starting hypridle"
+    [[ -d $runtime_dir ]] || exit 0
+    pgrep -u "$user_id" -x Hyprland >/dev/null 2>&1 || exit 0
+    pgrep -u "$user_id" -x hypridle >/dev/null 2>&1 && exit 0
+
+    runuser -u "$user_name" -- env XDG_RUNTIME_DIR="$runtime_dir" systemctl --user start hypridle.service >/dev/null 2>&1 || true
+    ;;
+esac
+EOF
+chmod 0755 /usr/lib/systemd/system-sleep/hibernate-hypridle
+rm -f /etc/systemd/system-sleep/hibernate-hypridle
+
+rm -f /etc/systemd/sleep.conf.d/20-hibernate-shutdown.conf
+
+if [[ -f /etc/pacman.conf ]]; then
+  perl -0pi -e 's/\n# Hold NVIDIA at 595\.58\.03 while validating hibernate stability\.\nIgnorePkg = nvidia-open-dkms nvidia-utils lib32-nvidia-utils\n//g; s/(DownloadUser = alpm\n)/$1\n# Hold NVIDIA at 595.58.03 while validating hibernate stability.\nIgnorePkg = nvidia-open-dkms nvidia-utils lib32-nvidia-utils\n/' /etc/pacman.conf
+fi
+
+cat >/etc/modprobe.d/zz-nvidia-power-management.conf <<'EOF'
+options nvidia NVreg_PreserveVideoMemoryAllocations=1 NVreg_UseKernelSuspendNotifiers=0 NVreg_TemporaryFilePath=/var/tmp
+EOF
+
+cat >/etc/mkinitcpio.conf.d/zz-hibernate-resume-order.conf <<'EOF'
+HOOKS=(base udev plymouth keyboard autodetect microcode modconf keymap consolefont block encrypt resume kms filesystems fsck btrfs-overlayfs)
+EOF
+
+rm -f /etc/mkinitcpio.conf.d/omarchy_resume.conf
+if [[ -f /etc/mkinitcpio.conf.d/nvidia.conf ]]; then
+  mv /etc/mkinitcpio.conf.d/nvidia.conf /etc/mkinitcpio.conf.d/nvidia.conf.disabled
+fi
+
+cat >/etc/limine-entry-tool.d/i8042-noaux.conf <<'EOF'
+KERNEL_CMDLINE[default]+=" i8042.noaux=1"
+EOF
+
+if [[ -f /etc/default/limine ]] && ! grep -q 'i8042\.noaux=1' /etc/default/limine; then
+  printf '\nKERNEL_CMDLINE[default]+=" i8042.noaux=1"\n' >>/etc/default/limine
+fi
+
+if [[ -f /etc/default/limine ]]; then
+  if grep -q '^BOOT_ORDER=' /etc/default/limine; then
+    sed -i 's/^BOOT_ORDER=.*/BOOT_ORDER="linux, *fallback, Snapshots"/' /etc/default/limine
+  else
+    printf '\nBOOT_ORDER="linux, *fallback, Snapshots"\n' >>/etc/default/limine
+  fi
+fi
+
+systemctl enable nvidia-suspend.service nvidia-hibernate.service nvidia-resume.service >/dev/null
+systemctl daemon-reload
+systemctl reload systemd-logind.service || true
+
+if command -v limine-mkinitcpio >/dev/null 2>&1; then
+  limine-mkinitcpio
+elif command -v mkinitcpio >/dev/null 2>&1; then
+  mkinitcpio -P
+fi
+
+if command -v limine-update >/dev/null 2>&1; then
+  limine-update
+fi
+
+printf 'Omarchy hibernate fix reapplied. Reboot if kernel cmdline or initramfs changed.\n'
